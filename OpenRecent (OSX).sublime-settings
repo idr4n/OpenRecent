@@ -1,0 +1,7 @@
+{
+  // folder where Session.sublime_session is stored
+  "session_folder": "",
+
+  // whether to display one or two lines in the quick panel
+  "display_two_lines": true,
+}

@@ -1,0 +1,4 @@
+[
+  // Open folder history
+  { "keys": ["super+shift+h"], "command": "open_folder_history" }
+]
