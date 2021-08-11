@@ -93,7 +93,7 @@ class Conf():
         the second row has the rest (first part) of the path
         """
         prittified_folders = list(map(self.prettify_path, self.folders))
-        if conf.settings.get('display_two_lines', False):
+        if self.settings.get('display_two_lines', False):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
                                  for f in prittified_folders]
         else:
