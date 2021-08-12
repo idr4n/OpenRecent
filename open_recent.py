@@ -13,61 +13,78 @@ import sublime_plugin
 # SESSION_FOLDER = '/Users/ivan/Library/Application Support\
 # /Sublime Text 3/Local/'
 
+SETTINGS_DICT = {
+    'osx': 'OpenRecent (OSX).sublime-settings',
+    'windows': 'OpenRecent (Windows).sublime-settings',
+    'linux': 'OpenRecent (Linux).sublime-settings',
+}
+OS = sublime.platform()
 
-class Conf():
-    SETTINGS_DICT = {
-        'osx': 'OpenRecent (OSX).sublime-settings',
-        'windows': 'OpenRecent (Windows).sublime-settings',
-        'linux': 'OpenRecent (Linux).sublime-settings',
-    }
-    OS = sublime.platform()
+settings = {}
+prefs = {}
 
+
+def plugin_loaded():
+    global settings, prefs
+    settings = sublime.load_settings(SETTINGS_DICT[OS])
+    prefs = Pref()
+
+
+class Pref():
     def __init__(self):
-        self.settings = sublime.load_settings(Conf.SETTINGS_DICT[Conf.OS])
-        self.session_path = self.get_session_folder()
-        self.folders = []
-        self.folders_count = 0
-        self.fpath = os.path.join(self.session_path, 'Session.sublime_session')
-        self.display_list = []
-        self.cache = {'last_selection': '', 'last_index': 0}
+        self.session_file = 'Session.sublime_session'
+        self.auto_session_file = 'Auto Save Session.sublime_session'
 
-    def get_session_folder(self):
+    def get_session_path(self):
         """
         Returns the folder where Sublime's session is stored in the system.
         """
-        if self.settings.get('session_folder'):
-            return self.settings.get('session_folder')
+        package_path = sublime.packages_path()
+        session_folder = os.path.join(os.path.dirname(package_path), 'Local')
 
-        pack_path = sublime.packages_path()
-        if self.OS == 'osx':
-            return os.path.join(os.path.dirname(pack_path), 'Local')
+        if OS == 'osx':
+            session_folder = os.path.join(
+                os.path.dirname(package_path), 'Local')
+
+        if settings.get('session_folder'):
+            session_folder = os.path.expanduser(settings.get('session_folder'))
+
+        ses_path = os.path.join(session_folder, self.session_file)
+        auto_ses_path = os.path.join(session_folder, self.auto_session_file)
+
+        if os.path.exists(auto_ses_path):
+            # print('Auto session exists: ', auto_ses_path)
+            return auto_ses_path
+
+        return ses_path
+
+
+class Conf():
+    def __init__(self):
+        self.folders = []
+        self.folders_count = 0
+        self.display_list = []
+        self.cache = {'last_selection': '', 'last_index': 0}
 
     def load_folders_data(self):
         """
         Loads the list of folders to be shown in the quick panel
         """
-        auto_session_path = os.path.join(self.session_path,
-                                         'Auto Save Session.sublime_session')
-        if os.path.exists(auto_session_path):
-            self.fpath = auto_session_path
+        fpath = prefs.get_session_path()
 
-        if os.path.exists(self.fpath):
-            with open(self.fpath, encoding="utf-8") as f:
+        if os.path.exists(fpath):
+            with open(fpath, encoding="utf-8") as f:
                 try:
-                    # decodes a JSON string into an object
-                    # use sublime's decode_value method instead of
-                    # Python's JSON library
-                    # session_json = json.loads(f.read())
                     session_json = sublime.decode_value(f.read())
                     self.folders = session_json['folder_history']
                     self.folders_count = len(self.folders)
                 except Exception as Inst:
                     print('OpenRecent Exception:', Inst)
                     sublime.message_dialog(
-                        'Could not load JSON data from {}'.format(self.fpath))
+                        'Could not load JSON data from {}'.format(fpath))
         else:
             sublime.message_dialog(
-                "Path '{}' does not exist".format(self.fpath))
+                "Path '{}' does not exist".format(fpath))
 
     def get_last_index(self):
         """
@@ -93,7 +110,7 @@ class Conf():
         the second row has the rest (first part) of the path
         """
         prittified_folders = list(map(self.prettify_path, self.folders))
-        if self.settings.get('display_two_lines', False):
+        if settings.get('display_two_lines', False):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
                                  for f in prittified_folders]
         else:
@@ -134,7 +151,7 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         """
         Returns the window in which the new data will be loaded.
 
-        Returns a new window if the active window is not empty, otherwise
+        A new window if the active window is not empty, otherwise
         returns the active window
         """
         curwin = sublime.active_window()
@@ -148,8 +165,7 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         """
         Opens the selected folder in the active window
 
-        :param  index:  The index of the folder in the quick panel display
-        list
+        :param  index:  The index of the folder in the quick panel list
         """
         if index >= 0:
             folder = self.conf.folders[index]
