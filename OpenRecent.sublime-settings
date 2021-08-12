@@ -4,4 +4,7 @@
 
   // whether to display one or two lines in the quick panel
   "display_two_lines": true,
+
+  // whether to show file previews
+  "show_file_preview": true,
 }

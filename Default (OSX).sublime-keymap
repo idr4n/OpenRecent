@@ -1,4 +1,6 @@
 [
   // Open folder history
-  { "keys": ["super+shift+h"], "command": "open_folder_history" }
+  { "keys": ["super+shift+h"], "command": "open_folder_history" },
+  // Open file history
+  { "keys": ["super+shift+o"], "command": "open_file_history" },
 ]

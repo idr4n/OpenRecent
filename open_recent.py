@@ -68,6 +68,7 @@ class Conf():
         Loads the list of folders to be shown in the quick panel
         """
         fpath = prefs.get_session_path()
+        # print(fpath)
 
         if os.path.exists(fpath):
             with open(fpath, encoding="utf-8") as f:
@@ -113,6 +114,10 @@ class Conf():
         The first row of each item has the last component of the path, while
         the second row has the rest (first part) of the path
         """
+        if self.items_count == 0:
+            sublime.message_dialog('There are no items in history yet!')
+            return
+
         prittified_items = list(map(self.prettify_path, self.items))
         if settings.get('display_two_lines'):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
@@ -188,3 +193,64 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         self.window.show_quick_panel(
             self.conf.display_list, self.open_folder, placeholder=placeholder,
             selected_index=self.conf.cache['last_index'])
+
+
+class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
+    conf = Conf('files')
+
+    def get_window(self):
+        """
+        Returns the window in which the file will be opened.
+        """
+        curwin = sublime.active_window()
+        if not curwin.folders() and not curwin.views():
+            return curwin
+
+        self.window.run_command('new_window')
+        return sublime.active_window()
+        # return sublime.active_window()
+
+    def is_transient(self, view):
+        opened_views = self.window.views()
+        if view in opened_views:
+            return False
+
+        return True
+
+    def show_preview(self, index):
+        if index >= 0 and settings.get('show_file_preview'):
+            file = self.conf.items[index]
+            if os.path.isfile(os.path.expanduser(file)):
+                self.window.open_file(file, sublime.TRANSIENT)
+
+    def open_file(self, index):
+        """
+        Opens the selected folder in the active window
+
+        :param  index:  The index of the file in the quick panel list
+        """
+        active_view = self.window.active_view()
+        if index >= 0:
+            if self.is_transient(active_view):
+                active_view.close()
+            file = self.conf.items[index]
+            self.conf.update_cache(last_selection=file)
+            if os.path.isfile(os.path.expanduser(file)):
+                new_win = self.get_window()
+                new_win.set_sidebar_visible(True)
+                new_win.open_file(file)
+
+        else:
+            if self.is_transient(active_view):
+                active_view.close()
+
+    def run(self):
+        self.conf.load_items_data()
+        self.conf.set_display_list()
+        placeholder = "Open Recent file (out of {})".format(
+            self.conf.items_count)
+        self.window.show_quick_panel(
+            self.conf.display_list,
+            self.open_file, placeholder=placeholder,
+            selected_index=self.conf.cache['last_index'],
+            on_highlight=self.show_preview)
