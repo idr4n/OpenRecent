@@ -13,11 +13,7 @@ import sublime_plugin
 # SESSION_FOLDER = '/Users/ivan/Library/Application Support\
 # /Sublime Text 3/Local/'
 
-SETTINGS_DICT = {
-    'osx': 'OpenRecent (OSX).sublime-settings',
-    'windows': 'OpenRecent (Windows).sublime-settings',
-    'linux': 'OpenRecent (Linux).sublime-settings',
-}
+SETTINGS_FILE = 'OpenRecent.sublime-settings'
 OS = sublime.platform()
 
 settings = {}
@@ -26,7 +22,7 @@ prefs = {}
 
 def plugin_loaded():
     global settings, prefs
-    settings = sublime.load_settings(SETTINGS_DICT[OS])
+    settings = sublime.load_settings(SETTINGS_FILE)
     prefs = Pref()
 
 
