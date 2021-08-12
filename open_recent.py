@@ -56,13 +56,14 @@ class Pref():
 
 
 class Conf():
-    def __init__(self):
-        self.folders = []
-        self.folders_count = 0
+    def __init__(self, type='folders'):
+        self.type = type
+        self.items = []
+        self.items_count = 0
         self.display_list = []
         self.cache = {'last_selection': '', 'last_index': 0}
 
-    def load_folders_data(self):
+    def load_items_data(self):
         """
         Loads the list of folders to be shown in the quick panel
         """
@@ -72,8 +73,9 @@ class Conf():
             with open(fpath, encoding="utf-8") as f:
                 try:
                     session_json = sublime.decode_value(f.read())
-                    self.folders = session_json['folder_history']
-                    self.folders_count = len(self.folders)
+                    # self.items = session_json['folder_history']
+                    self.items = self.get_session_data(session_json)
+                    self.items_count = len(self.items)
                 except Exception as Inst:
                     print('OpenRecent Exception:', Inst)
                     sublime.message_dialog(
@@ -82,12 +84,18 @@ class Conf():
             sublime.message_dialog(
                 "Path '{}' does not exist".format(fpath))
 
+    def get_session_data(self, object):
+        if self.type == 'folders':
+            return object['folder_history']
+        if self.type == 'files':
+            return object['settings']['new_window_settings']['file_history']
+
     def get_last_index(self):
         """
         Returns the index of the last selected item.
         """
         try:
-            return self.folders.index(self.cache['last_selection'])
+            return self.items.index(self.cache['last_selection'])
         except Exception:
             # print('Open Recent: No previous selection found')
             return 0
@@ -105,12 +113,12 @@ class Conf():
         The first row of each item has the last component of the path, while
         the second row has the rest (first part) of the path
         """
-        prittified_folders = list(map(self.prettify_path, self.folders))
-        if settings.get('display_two_lines', False):
+        prittified_items = list(map(self.prettify_path, self.items))
+        if settings.get('display_two_lines'):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
-                                 for f in prittified_folders]
+                                 for f in prittified_items]
         else:
-            self.display_list = prittified_folders
+            self.display_list = prittified_items
 
     @staticmethod
     def prettify_path(path: str):
@@ -141,7 +149,7 @@ class SaveFolderCommand(sublime_plugin.WindowCommand):
 
 
 class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
-    conf = Conf()
+    conf = Conf('folders')
 
     def get_window(self):
         """
@@ -164,7 +172,7 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         :param  index:  The index of the folder in the quick panel list
         """
         if index >= 0:
-            folder = self.conf.folders[index]
+            folder = self.conf.items[index]
             self.conf.update_cache(last_selection=folder)
             if os.path.isdir(os.path.expanduser(folder)):
                 new_win = self.get_window()
@@ -173,10 +181,10 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
                 new_win.set_sidebar_visible(True)
 
     def run(self):
-        self.conf.load_folders_data()
+        self.conf.load_items_data()
         self.conf.set_display_list()
         placeholder = "Open Recent folder (out of {})".format(
-            self.conf.folders_count)
+            self.conf.items_count)
         self.window.show_quick_panel(
             self.conf.display_list, self.open_folder, placeholder=placeholder,
             selected_index=self.conf.cache['last_index'])
