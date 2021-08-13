@@ -253,8 +253,63 @@ class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
     def run(self):
         tab = self.window.active_view()
         file = tab.file_name()
+        if tab.is_dirty() or tab.is_scratch():
+            sublime.message_dialog('You need to save your changes first!')
+            return
         tab.close()
         self.window.run_command('new_window')
         new_win = sublime.active_window()
         new_win.set_sidebar_visible(True)
         new_win.open_file(file)
+
+
+class MoveToWindowCommand(sublime_plugin.WindowCommand):
+    wins_list = []
+    display_list = []
+
+    @staticmethod
+    def get_file_name(path):
+        return os.path.basename(path)
+
+    def clear_lists(self):
+        self.wins_list = []
+        self.display_list = []
+
+    def set_wins(self):
+        self.wins_list = sublime.windows()
+        for win in self.wins_list:
+            win_files = []
+            views = win.views()
+            for view in views:
+                win_files.append(self.get_file_name(view.file_name()))
+
+            if win_files:
+                display_item = []
+                display_item.append(win_files[0])
+                display_item.append(" | ".join(win_files))
+                self.display_list.append(display_item)
+            else:
+                self.display_list.append(['Empty Window', '--'])
+
+    def on_open(self, index):
+        tab = self.window.active_view()
+        if tab.is_dirty() or tab.is_scratch():
+            sublime.message_dialog('You need to save your changes first!')
+            return
+        if index >= 0:
+            current_win = sublime.active_window()
+            selected_win = self.wins_list[index]
+            if current_win != selected_win:
+                file = tab.file_name()
+                tab.close()
+                selected_win.set_sidebar_visible(True)
+                selected_win.open_file(file)
+                selected_win.bring_to_front()
+
+    def run(self):
+        self.clear_lists()
+        self.set_wins()
+        placeholder = 'Select window (out of {})'.format(len(self.wins_list))
+        self.window.show_quick_panel(
+            self.display_list,
+            self.on_open, placeholder=placeholder)

@@ -5,4 +5,6 @@
   { "keys": ["super+shift+o"], "command": "open_file_history" },
   // Move current tab to new window
   { "keys": ["super+ctrl+shift+n"], "command": "move_to_new_window" },
+  // Move current tab to a particular window
+  { "keys": ["ctrl+alt+shift+n"], "command": "move_to_window" },
 ]
