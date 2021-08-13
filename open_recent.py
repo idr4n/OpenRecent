@@ -132,26 +132,30 @@ class Conf():
             return os.path.join('~', path[len(user_home):])
         return path
 
+# ------------------------------------------------------------
+# TODO: keep track of folders and file history
+# Need to add listeners to keep track of changes in project_data
 
 # class FolderListener(sublime_plugin.ViewEventListener):
 #     def on_load(self):
 #         print('--View activated')
 #         sublime.active_window().run_command('save_folder')
 
-class FolderListener(sublime_plugin.EventListener):
-    def on_new_window_async(self, window):
-        print('--New window opened')
-        window.run_command('save_folder')
+# class FolderListener(sublime_plugin.EventListener):
+#     def on_new_window_async(self, window):
+#         print('--New window opened')
+#         window.run_command('save_folder')
 
 
-class SaveFolderCommand(sublime_plugin.WindowCommand):
-    def run(self):
-        folder = self.window.folders()
-        if folder:
-            print("Folder name:", folder)
-        else:
-            print('No folder in window')
+# class SaveFolderCommand(sublime_plugin.WindowCommand):
+#     def run(self):
+#         folder = self.window.folders()
+#         if folder:
+#             print("Folder name:", folder)
+#         else:
+#             print('No folder in window')
 
+# ------------------------------------------------------------
 
 class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
     conf = Conf('folders')

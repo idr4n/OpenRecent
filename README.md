@@ -10,7 +10,7 @@ At the moment, it only tries to read from `Session.sublime_session` to capture t
 
 It provides two commands at the moment:
 
-```json
+```
 [
   // Open folder history
   { "keys": ["super+shift+h"], "command": "open_folder_history" },

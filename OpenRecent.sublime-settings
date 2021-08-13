@@ -1,5 +1,7 @@
 {
-  // folder where Session.sublime_session is stored
+  // if the plugin can't find Session.sublime_session, you can try adding the
+  // folder where it is stored in your system. In MacOS is normally
+  // in '~/Library/Application Support/Sublime Text/Local'
   "session_folder": "",
 
   // whether to display one or two lines in the quick panel
