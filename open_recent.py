@@ -247,3 +247,14 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
             self.open_file, placeholder=placeholder,
             selected_index=self.conf.cache['last_index'],
             on_highlight=self.show_preview)
+
+
+class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        tab = self.window.active_view()
+        file = tab.file_name()
+        tab.close()
+        self.window.run_command('new_window')
+        new_win = sublime.active_window()
+        new_win.set_sidebar_visible(True)
+        new_win.open_file(file)
