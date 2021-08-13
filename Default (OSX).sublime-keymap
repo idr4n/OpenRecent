@@ -4,5 +4,5 @@
   // Open file history
   { "keys": ["super+shift+o"], "command": "open_file_history" },
   // Move current tab to new window
-  { "keys": ["super+ctrl+shift+n"], "command": "move_tab_to_new_window" },
+  { "keys": ["super+ctrl+shift+n"], "command": "move_to_new_window" },
 ]
