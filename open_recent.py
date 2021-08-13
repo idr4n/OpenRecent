@@ -2,17 +2,6 @@ import os
 import sublime
 import sublime_plugin
 
-# mylist = [
-#     '/Users/ivan/pCloud/Dev/Rust/Rust_Web_Programming/todo_app',
-#     '/Users/ivan/Dropbox/Notes-Database'
-# ]
-
-# the Session.sublime_session that contains the folders and files history is
-# located in '/Users/ivan/Library/Application Support/Sublime Text 3/Local'
-
-# SESSION_FOLDER = '/Users/ivan/Library/Application Support\
-# /Sublime Text 3/Local/'
-
 SETTINGS_FILE = 'OpenRecent.sublime-settings'
 OS = sublime.platform()
 
