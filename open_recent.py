@@ -27,7 +27,7 @@ class Pref():
         package_path = sublime.packages_path()
         session_folder = os.path.join(os.path.dirname(package_path), 'Local')
 
-        if OS == 'osx':
+        if OS == 'osx' or OS == 'linux':
             session_folder = os.path.join(
                 os.path.dirname(package_path), 'Local')
 
