@@ -260,7 +260,11 @@ class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
         self.window.run_command('new_window')
         new_win = sublime.active_window()
         new_win.set_sidebar_visible(True)
-        new_win.open_file(file)
+        if sublime.version() >= '4078':
+            new_view = new_win.open_file(file)
+            new_view.settings().update(tab.settings().to_dict())
+        else:
+            new_win.open_file(file)
 
 
 class MoveToWindowCommand(sublime_plugin.WindowCommand):
@@ -303,7 +307,12 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
                 file = tab.file_name()
                 tab.close()
                 selected_win.set_sidebar_visible(True)
-                selected_win.open_file(file)
+                if sublime.version() >= '4078':
+                    new_view = selected_win.open_file(file)
+                    new_view.settings().update(tab.settings().to_dict())
+                else:
+                    selected_win.open_file(file)
+
                 selected_win.bring_to_front()
 
     def run(self):
