@@ -1,0 +1,10 @@
+[
+  // Open folder history
+  { "keys": ["ctrl+shift+h"], "command": "open_folder_history" },
+  // Open file history
+  { "keys": ["ctrl+shift+o"], "command": "open_file_history" },
+  // Move current tab to new window
+  { "keys": ["ctrl+alt+n"], "command": "move_to_new_window" },
+  // Move current tab to a particular window
+  { "keys": ["ctrl+alt+shift+n"], "command": "move_to_window" },
+]

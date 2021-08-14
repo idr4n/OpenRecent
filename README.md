@@ -2,7 +2,7 @@
 
 ### Description
 
-A Sublime Text plugin to open recent folders and files. The plugin is at its early stages and should work in MacOS and Linux at the moment, but integration for Windows will be added soon.
+A Sublime Text plugin to open recent folders and files. The plugin is at its early stages and should work in MacOS, Linux, and Windows.
 
 At the moment, it only tries to read from `Session.sublime_session` to capture the folders and files history. I'm planning to add the functionality that the plugin keeps track of the history itself, instead of depending on Sublime's session data.
 
