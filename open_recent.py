@@ -279,6 +279,12 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
         self.wins_list = []
         self.display_list = []
 
+    @staticmethod
+    def win_is_empty(win):
+        if len(win.views()) == 0:
+            return True
+        return False
+
     def set_wins(self):
         self.wins_list = sublime.windows()
         for win in self.wins_list:
@@ -314,6 +320,8 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
                     selected_win.open_file(file)
 
                 selected_win.bring_to_front()
+            if self.win_is_empty(current_win):
+                current_win.run_command('close_window')
 
     def run(self):
         self.clear_lists()
