@@ -1,4 +1,5 @@
 import os
+import re
 import sublime
 import sublime_plugin
 
@@ -26,10 +27,6 @@ class Pref():
         """
         package_path = sublime.packages_path()
         session_folder = os.path.join(os.path.dirname(package_path), 'Local')
-
-        if OS == 'osx' or OS == 'linux':
-            session_folder = os.path.join(
-                os.path.dirname(package_path), 'Local')
 
         if settings.get('session_folder'):
             session_folder = os.path.expanduser(settings.get('session_folder'))
@@ -75,10 +72,16 @@ class Conf():
                 "Path '{}' does not exist".format(fpath))
 
     def get_session_data(self, object):
+        data = []
         if self.type == 'folders':
-            return object['folder_history']
+            data = object['folder_history']
         if self.type == 'files':
-            return object['settings']['new_window_settings']['file_history']
+            data = object['settings']['new_window_settings']['file_history']
+
+        if OS == 'windows':
+            data = list(map(self.windofy_path, data))
+
+        return data
 
     def get_last_index(self):
         """
@@ -120,6 +123,13 @@ class Conf():
         if path.startswith(os.path.expanduser('~')):
             return os.path.join('~', path[len(user_home):])
         return path
+
+    @staticmethod
+    def windofy_path(path: str):
+        if re.match(r'^/[A-Z]/', path):
+            return os.path.abspath(path[2:])
+        else:
+            return os.path.normpath(path)
 
 # ------------------------------------------------------------
 # TODO: keep track of folders and file history
