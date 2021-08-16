@@ -259,9 +259,48 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
             on_highlight=self.show_preview)
 
 
+class ViewSettings():
+    def __init__(self, view) -> None:
+        self.view = view
+        self.settings = self.__saveSettings()
+
+    def __bookmarks(self):
+        return self.view.get_regions('bookmarks')
+
+    def __selections(self):
+        return [region for region in self.view.sel()]
+
+    def __saveSettings(self):
+        return {
+            'bookmarks': self.__bookmarks(),
+            'selections': self.__selections(),
+            'viewport': self.view.viewport_position()
+        }
+
+    def copyTo(self, other_view):
+        if other_view.is_loading():
+            sublime.set_timeout(lambda: self.copyTo(other_view), 0)
+        else:
+            # Bookmarks
+            other_view.add_regions(
+                'bookmarks',
+                self.settings['bookmarks'],
+                'bookmarks', 'bookmark',
+                sublime.HIDDEN | sublime.PERSISTENT)
+
+            # Selections
+            other_view.sel().clear()
+            for region in self.settings['selections']:
+                other_view.sel().add(region)
+
+            # Scroll the viewport to given layout position
+            other_view.set_viewport_position(self.settings['viewport'])
+
+
 class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
     def run(self):
         tab = self.window.active_view()
+        tab_settings = ViewSettings(tab)
         file = tab.file_name()
         if tab.is_dirty() or tab.is_scratch():
             sublime.message_dialog('You need to save your changes first!')
@@ -270,11 +309,8 @@ class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
         self.window.run_command('new_window')
         new_win = sublime.active_window()
         new_win.set_sidebar_visible(True)
-        if sublime.version() >= '4078':
-            new_view = new_win.open_file(file)
-            new_view.settings().update(tab.settings().to_dict())
-        else:
-            new_win.open_file(file)
+        new_view = new_win.open_file(file)
+        tab_settings.copyTo(new_view)
 
 
 class MoveToWindowCommand(sublime_plugin.WindowCommand):
@@ -313,6 +349,7 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
 
     def on_open(self, index):
         tab = self.window.active_view()
+        tab_settings = ViewSettings(tab)
         if tab.is_dirty() or tab.is_scratch():
             sublime.message_dialog('You need to save your changes first!')
             return
@@ -323,13 +360,11 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
                 file = tab.file_name()
                 tab.close()
                 selected_win.set_sidebar_visible(True)
-                if sublime.version() >= '4078':
-                    new_view = selected_win.open_file(file)
-                    new_view.settings().update(tab.settings().to_dict())
-                else:
-                    selected_win.open_file(file)
+                new_view = selected_win.open_file(file)
+                tab_settings.copyTo(new_view)
 
                 selected_win.bring_to_front()
+
             if self.win_is_empty(current_win):
                 current_win.run_command('close_window')
 
