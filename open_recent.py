@@ -193,9 +193,14 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         self.conf.set_display_list()
         placeholder = "Open Recent folder (out of {})".format(
             self.conf.items_count)
-        self.window.show_quick_panel(
-            self.conf.display_list, self.open_folder, placeholder=placeholder,
-            selected_index=self.conf.cache['last_index'])
+        if len(self.conf.display_list) > 0:
+            self.window.show_quick_panel(
+                self.conf.display_list,
+                self.open_folder,
+                placeholder=placeholder,
+                selected_index=self.conf.cache['last_index'])
+        else:
+            self.window.show_quick_panel(["No history found"], None)
 
 
 class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
@@ -252,11 +257,14 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
         self.conf.set_display_list()
         placeholder = "Open Recent file (out of {})".format(
             self.conf.items_count)
-        self.window.show_quick_panel(
-            self.conf.display_list,
-            self.open_file, placeholder=placeholder,
-            selected_index=self.conf.cache['last_index'],
-            on_highlight=self.show_preview)
+        if len(self.conf.display_list) > 0:
+            self.window.show_quick_panel(
+                self.conf.display_list,
+                self.open_file, placeholder=placeholder,
+                selected_index=self.conf.cache['last_index'],
+                on_highlight=self.show_preview)
+        else:
+            self.window.show_quick_panel(["No history found"], None)
 
 
 class ViewSettings():
