@@ -211,12 +211,15 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
         Returns the window in which the file will be opened.
         """
         curwin = sublime.active_window()
-        if not curwin.folders() and not curwin.views():
-            return curwin
 
-        self.window.run_command('new_window')
-        return sublime.active_window()
-        # return sublime.active_window()
+        if settings.get('open_in_new_window'):
+            if not curwin.folders() and not curwin.views():
+                return curwin
+            else:
+                self.window.run_command('new_window')
+                return sublime.active_window()
+
+        return curwin
 
     def is_transient(self, view):
         opened_views = self.window.views()

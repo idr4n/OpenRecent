@@ -11,4 +11,7 @@
 
   // whether to show file previews
   "show_file_preview": true,
+
+  // whether to open file from history in a new window
+  "open_in_new_window": false,
 }
