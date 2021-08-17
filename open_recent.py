@@ -270,18 +270,18 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
 class ViewSettings():
     def __init__(self, view) -> None:
         self.view = view
-        self.settings = self.__saveSettings()
+        self.settings = self._saveSettings()
 
-    def __bookmarks(self):
+    def _bookmarks(self):
         return self.view.get_regions('bookmarks')
 
-    def __selections(self):
+    def _selections(self):
         return [region for region in self.view.sel()]
 
-    def __saveSettings(self):
+    def _saveSettings(self):
         return {
-            'bookmarks': self.__bookmarks(),
-            'selections': self.__selections(),
+            'bookmarks': self._bookmarks(),
+            'selections': self._selections(),
             'viewport': self.view.viewport_position()
         }
 
