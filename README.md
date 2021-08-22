@@ -16,6 +16,10 @@ It provides three commands at the moment:
 [
   // Open folder history
   { "keys": ["super+shift+h"], "command": "open_folder_history" },
+  // Open folder history and add to project
+  { "keys": ["ctrl+shift+h"], "command": "open_folder_history",
+    "args": { "add_to_project": true }
+  },
   // Open file history
   { "keys": ["super+shift+o"], "command": "open_file_history" },
   // Move current tab to new window

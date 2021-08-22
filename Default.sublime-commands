@@ -1,6 +1,9 @@
 [
   { "caption": "OpenRecent: Open folder history", "command": "open_folder_history" },
   { "caption": "OpenRecent: Open file history", "command": "open_file_history" },
+  { "caption": "OpenRecent: Open file history and add to project",
+    "command": "open_folder_history", "args": { "add_to_project": true }
+  },
   { "caption": "OpenRecent: Move current tab to new window", "command": "move_to_new_window" },
   { "caption": "OpenRecent: Move current tab to a particular window", "command": "move_to_window" },
 ]

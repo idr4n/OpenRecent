@@ -1,6 +1,10 @@
 [
   // Open folder history
   { "keys": ["ctrl+shift+h"], "command": "open_folder_history" },
+  // Open folder history and add to project
+  { "keys": ["ctrl+alt+shift+h"], "command": "open_folder_history",
+    "args": { "add_to_project": true }
+  },
   // Open file history
   { "keys": ["ctrl+shift+o"], "command": "open_file_history" },
   // Move current tab to new window

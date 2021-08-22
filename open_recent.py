@@ -157,9 +157,14 @@ class Conf():
 # ------------------------------------------------------------
 
 class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
-    conf = Conf('folders')
+    # conf = Conf('folders')
 
-    def get_window(self):
+    def __init__(self, window):
+        # sublime_plugin.WindowCommand.__init__(self, window)
+        super().__init__(window)
+        self.conf = Conf('folders')
+
+    def get_window(self, add_to: bool):
         """
         Returns the window in which the new data will be loaded.
 
@@ -167,28 +172,34 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         returns the active window
         """
         curwin = sublime.active_window()
-        if not curwin.folders() and not curwin.views():
+        if (not curwin.folders() and not curwin.views()) or add_to:
             return curwin
 
         self.window.run_command('new_window')
         return sublime.active_window()
 
-    def open_folder(self, index):
+    def open_folder(self, index, add_to: bool):
         """
         Opens the selected folder in the active window
 
         :param  index:  The index of the folder in the quick panel list
+        :param  add_to: Whether to add folder to current project
         """
         if index >= 0:
             folder = self.conf.items[index]
             self.conf.update_cache(last_selection=folder)
             if os.path.isdir(os.path.expanduser(folder)):
-                new_win = self.get_window()
-                new_data = {'folders': [{'path': folder}]}
+                new_win = self.get_window(add_to)
+                if self.window.project_data() and add_to:
+                    win_folders = self.window.project_data().get('folders', [])
+                else:
+                    win_folders = []
+                win_folders.append({'path': folder})
+                new_data = {'folders': win_folders}
                 new_win.set_project_data(new_data)
                 new_win.set_sidebar_visible(True)
 
-    def run(self):
+    def run(self, add_to_project=False):
         self.conf.load_items_data()
         self.conf.set_display_list()
         placeholder = "Open Recent folder (out of {})".format(
@@ -196,7 +207,7 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
         if len(self.conf.display_list) > 0:
             self.window.show_quick_panel(
                 self.conf.display_list,
-                self.open_folder,
+                on_select=lambda idx: self.open_folder(idx, add_to_project),
                 placeholder=placeholder,
                 selected_index=self.conf.cache['last_index'])
         else:
@@ -204,7 +215,11 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
 
 
 class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
-    conf = Conf('files')
+    # conf = Conf('files')
+
+    def __init__(self, window):
+        super().__init__(window)
+        self.conf = Conf('files')
 
     def get_window(self):
         """
@@ -248,7 +263,7 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
             self.conf.update_cache(last_selection=file)
             if os.path.isfile(os.path.expanduser(file)):
                 new_win = self.get_window()
-                new_win.set_sidebar_visible(True)
+                # new_win.set_sidebar_visible(True)
                 new_win.open_file(file)
 
         else:
@@ -319,7 +334,7 @@ class MoveToNewWindowCommand(sublime_plugin.WindowCommand):
         tab.close()
         self.window.run_command('new_window')
         new_win = sublime.active_window()
-        new_win.set_sidebar_visible(True)
+        # new_win.set_sidebar_visible(True)
         new_view = new_win.open_file(file)
         tab_settings.copyTo(new_view)
 
@@ -370,7 +385,7 @@ class MoveToWindowCommand(sublime_plugin.WindowCommand):
             if current_win != selected_win:
                 file = tab.file_name()
                 tab.close()
-                selected_win.set_sidebar_visible(True)
+                # selected_win.set_sidebar_visible(True)
                 new_view = selected_win.open_file(file)
                 tab_settings.copyTo(new_view)
 
