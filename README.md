@@ -6,11 +6,11 @@ A Sublime Text plugin to open recent folders and files. The plugin is at its ear
 
 At the moment, it only tries to read from `Session.sublime_session` to capture the folders and files history. I'm planning to add the functionality that the plugin keeps track of the history itself, instead of depending on Sublime's session data.
 
-Additionally, it provides two commands to open the current file in a new window or an existing window. It closes the current tab and opens the file in the specific window, preserving some view-specific settings such as bookmarks, selections, cursor position, and scroll position. Not all settings are preserved though, so use with caution. However, if there are unsaved changes, you will be prompted to save them first.
+Additionally, it adds two commands to open the current file in a new window or an existing window. It closes the current tab and opens the file in the specific window, preserving some view-specific settings such as bookmarks, selections, cursor position, and scroll position. Not all settings are preserved though, so use with caution. However, if there are unsaved changes, you will be prompted to save them first.
 
 ### Commands and keyboard shortcuts
 
-It provides three commands at the moment:
+It provides the following commands:
 
 ```
 [
