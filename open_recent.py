@@ -3,20 +3,200 @@ import re
 import sublime
 import sublime_plugin
 
+DEBUG_ON = True
 SETTINGS_FILE = 'OpenRecent.sublime-settings'
 OS = sublime.platform()
 
+RECENT_FOLDERS = 'OpenRecent_recent_folders.json'
+FOLDERS_INFO = 'OpenRecent_folders_info.json'
+
 settings = {}
-prefs = {}
+prefs_subl_history = {}
+folders_hist = []
+folders_info = {}
+
+
+def debug(var, message=''):
+    if DEBUG_ON:
+        if var:
+            print('OpenRecent Debug - %s: %s' % (message, var))
+        else:
+            print('OpenRecent Debug: %s' % message)
 
 
 def plugin_loaded():
-    global settings, prefs
+    global settings, prefs_subl_history
     settings = sublime.load_settings(SETTINGS_FILE)
-    prefs = Pref()
+    prefs_subl_history = PrefSublHist()
+    load_history_files()
 
 
-class Pref():
+def load_history_files():
+    global folders_hist, folders_info
+    recent_folders = os.path.join(
+        sublime.packages_path(), 'User', RECENT_FOLDERS)
+    recent_folders_info = os.path.join(
+        sublime.packages_path(), 'User', FOLDERS_INFO)
+
+    folders_hist = get_data(recent_folders, [])
+    folders_info = get_data(recent_folders_info, {})
+
+
+def get_data(path: str, default=[]):
+    data = default
+    if os.path.exists(path):
+        with open(path, 'r', encoding="utf-8") as f:
+            try:
+                data = sublime.decode_value(f.read())
+            except Exception as Inst:
+                debug(Inst, 'OpenRecent Exception')
+                sublime.message_dialog(
+                    'Could not load JSON data from %s' % path)
+
+            if not data:
+                data = default
+    else:
+        with open(path, 'w', encoding="utf-8") as f:
+            debug(path, 'creating file')
+            data = default
+            f.write(sublime.encode_value(data, True))
+
+    return data
+
+
+def prettify_path(path: str):
+    user_home = os.path.expanduser('~') + os.sep
+    if path.startswith(os.path.expanduser('~')):
+        return os.path.join('~', path[len(user_home):])
+    return path
+
+
+def display_list(str_list):
+    """Prettifies path and return list in reversed order"""
+    return list(map(prettify_path, str_list[::-1]))
+
+
+class FoldersListener(sublime_plugin.ViewEventListener):
+    def on_load_async(self):
+        self._append_folders()
+
+    def on_activated_async(self):
+        self._update_folders_info()
+
+    def _update_folders_info(self):
+        window = self.view.window()
+        if not window:
+            return
+        views = window.views()
+
+        for folder in window.folders():
+            opened_files_in_folder = []
+            folder = prettify_path(folder)
+            folder_info = folders_info.get(folder, {})
+            if views:
+                for view in views:
+                    file_name = prettify_path(view.file_name())
+                    if file_name.startswith(folder):
+                        opened_files_in_folder.append(file_name)
+
+                folder_info['opened_files'] = opened_files_in_folder
+            else:
+                folder_info['opened_files'] = []
+
+            folders_info[folder] = folder_info
+
+    def _append_folders(self):
+        window = self.view.window()
+        win_folders = window.folders()
+
+        if win_folders:
+            for folder in win_folders:
+                folder = prettify_path(folder)
+                if folder in folders_hist:
+                    folders_hist.remove(folder)
+
+                folders_hist.append(folder)
+
+
+class PreCloseWinListener(sublime_plugin.EventListener):
+    def on_pre_close_window(self, window):
+        self._save_folders()
+        self._save_folders_info()
+
+    def _save_folders(self):
+        folders_data = sublime.encode_value(folders_hist, True)
+        recent_folders = os.path.join(
+            sublime.packages_path(), 'User', RECENT_FOLDERS)
+        with open(recent_folders, 'w', encoding="utf-8") as f:
+            f.write(folders_data)
+
+    def _save_folders_info(self):
+        folders_info_data = sublime.encode_value(folders_info, True)
+        recent_folders_info = os.path.join(
+            sublime.packages_path(), 'User', FOLDERS_INFO)
+        with open(recent_folders_info, 'w', encoding="utf-8") as f:
+            f.write(folders_info_data)
+
+
+class OpenRecentFoldersCommand(sublime_plugin.WindowCommand):
+    def __init__(self, window) -> None:
+        super().__init__(window)
+        self.folders = []
+
+    def get_window(self, folder, add_to: bool):
+        curwin = sublime.active_window()
+        for window in sublime.windows():
+            if os.path.expanduser(folder) in window.folders() and not add_to:
+                return window, True
+        if (not curwin.folders() and not curwin.views()) or add_to:
+            return curwin, False
+
+        self.window.run_command('new_window')
+        return sublime.active_window(), False
+
+    def on_open(self, index, add_to: bool):
+        if index >= 0:
+            folder = self.folders[index]
+            if os.path.isdir(os.path.expanduser(folder)):
+                new_win, other_win_exists = self.get_window(folder, add_to)
+                if other_win_exists:
+                    new_win.bring_to_front()
+                    return
+                if self.window.project_data() and add_to:
+                    win_folders = self.window.project_data().get('folders', [])
+                else:
+                    win_folders = []
+
+                win_folders.append({'path': folder})
+                new_data = {'folders': win_folders}
+                new_win.set_project_data(new_data)
+                new_win.set_sidebar_visible(True)
+                self.open_folder_files(folder, new_win)
+
+    def open_folder_files(self, folder, window):
+        folder_info = folders_info.get(folder, {})
+        opened_files = folder_info.get('opened_files', [])
+        if opened_files:
+            for file in folder_info['opened_files']:
+                file = os.path.expanduser(file)
+                if os.path.exists(file):
+                    window.open_file(file)
+
+    def run(self, add_to_project=False):
+        self.folders = display_list(folders_hist)
+        placeholder = "Open Recent Folders (out of %s)" % len(self.folders)
+        if len(self.folders) > 0:
+            self.window.show_quick_panel(
+                self.folders,
+                on_select=lambda idx: self.on_open(idx, add_to_project),
+                placeholder=placeholder)
+        else:
+            self.window.show_quick_panel(["No history found"], None)
+
+
+class PrefSublHist():
+    """Set preferences for using Sublime history files"""
+
     def __init__(self):
         self.session_file = 'Session.sublime_session'
         self.auto_session_file = 'Auto Save Session.sublime_session'
@@ -41,8 +221,10 @@ class Pref():
         return ses_path
 
 
-class Conf():
-    def __init__(self, type='folders'):
+class ConfSublHist():
+    """Set configuration for using Sublime history files"""
+
+    def __init__(self, type='own_folders'):
         self.type = type
         self.items = []
         self.items_count = 0
@@ -53,8 +235,8 @@ class Conf():
         """
         Loads the list of folders to be shown in the quick panel
         """
-        fpath = prefs.get_session_path()
-        # print(fpath)
+
+        fpath = prefs_subl_history.get_session_path()
 
         if os.path.exists(fpath):
             with open(fpath, encoding="utf-8") as f:
@@ -84,9 +266,7 @@ class Conf():
         return data
 
     def get_last_index(self):
-        """
-        Returns the index of the last selected item.
-        """
+        """Returns the index of the last selected item."""
         try:
             return self.items.index(self.cache['last_selection'])
         except Exception:
@@ -100,29 +280,16 @@ class Conf():
         self.cache['last_index'] = self.get_last_index()
 
     def set_display_list(self):
-        """
-        Sets the display list to be shown in the Quick Panel
-
-        The first row of each item has the last component of the path, while
-        the second row has the rest (first part) of the path
-        """
         if self.items_count == 0:
             sublime.message_dialog('There are no items in history yet!')
             return
 
-        prittified_items = list(map(self.prettify_path, self.items))
+        prittified_items = list(map(prettify_path, self.items))
         if settings.get('display_two_lines'):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
                                  for f in prittified_items]
         else:
             self.display_list = prittified_items
-
-    @staticmethod
-    def prettify_path(path: str):
-        user_home = os.path.expanduser('~') + os.sep
-        if path.startswith(os.path.expanduser('~')):
-            return os.path.join('~', path[len(user_home):])
-        return path
 
     @staticmethod
     def windofy_path(path: str):
@@ -131,38 +298,12 @@ class Conf():
         else:
             return os.path.normpath(path)
 
-# ------------------------------------------------------------
-# TODO: keep track of folders and file history
-# Need to add listeners to keep track of changes in project_data
-
-# class FolderListener(sublime_plugin.ViewEventListener):
-#     def on_load(self):
-#         print('--View activated')
-#         sublime.active_window().run_command('save_folder')
-
-# class FolderListener(sublime_plugin.EventListener):
-#     def on_new_window_async(self, window):
-#         print('--New window opened')
-#         window.run_command('save_folder')
-
-
-# class SaveFolderCommand(sublime_plugin.WindowCommand):
-#     def run(self):
-#         folder = self.window.folders()
-#         if folder:
-#             print("Folder name:", folder)
-#         else:
-#             print('No folder in window')
-
-# ------------------------------------------------------------
 
 class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
-    # conf = Conf('folders')
-
     def __init__(self, window):
         # sublime_plugin.WindowCommand.__init__(self, window)
         super().__init__(window)
-        self.conf = Conf('folders')
+        self.conf = ConfSublHist('folders')
 
     def get_window(self, add_to: bool):
         """
@@ -219,7 +360,7 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
 
     def __init__(self, window):
         super().__init__(window)
-        self.conf = Conf('files')
+        self.conf = ConfSublHist('files')
 
     def get_window(self):
         """

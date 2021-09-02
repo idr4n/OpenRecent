@@ -1,8 +1,10 @@
 [
   // Open folder history
-  { "keys": ["ctrl+shift+h"], "command": "open_folder_history" },
+  // { "keys": ["ctrl+shift+h"], "command": "open_folder_history" },
+  { "keys": ["ctrl+shift+h"], "command": "open_recent_folders" },
   // Open folder history and add to project
-  { "keys": ["ctrl+alt+shift+h"], "command": "open_folder_history",
+  // { "keys": ["ctrl+alt+shift+h"], "command": "open_folder_history",
+  { "keys": ["ctrl+alt+shift+h"], "command": "open_recent_folders",
     "args": { "add_to_project": true }
   },
   // Open file history
