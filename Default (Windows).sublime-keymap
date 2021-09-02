@@ -1,12 +1,12 @@
 [
   // Open folder history
-  // { "keys": ["ctrl+shift+h"], "command": "open_folder_history" },
-  { "keys": ["ctrl+shift+h"], "command": "open_recent_folders" },
+  { "keys": ["ctrl+shift+h"], "command": "open_recent_folder" },
   // Open folder history and add to project
-  // { "keys": ["ctrl+alt+shift+h"], "command": "open_folder_history",
-  { "keys": ["ctrl+alt+shift+h"], "command": "open_recent_folders",
+  { "keys": ["ctrl+alt+shift+h"], "command": "open_recent_folder",
     "args": { "add_to_project": true }
   },
+  // Remove folder from recent history
+  { "keys": ["ctrl+alt+shift+d"], "command": "remove_recent_folder" },
   // Open file history
   { "keys": ["ctrl+shift+o"], "command": "open_file_history" },
   // Move current tab to new window

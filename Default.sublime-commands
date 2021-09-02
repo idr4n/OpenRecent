@@ -1,9 +1,14 @@
 [
-  { "caption": "OpenRecent: Open folder history", "command": "open_folder_history" },
-  { "caption": "OpenRecent: Open file history", "command": "open_file_history" },
-  { "caption": "OpenRecent: Open file history and add to project",
+  { "caption": "OpenRecent: Open recent folder", "command": "open_recent_folder" },
+  { "caption": "OpenRecent: Open recent folder and add to project",
+    "command": "open_recent_folder", "args": { "add_to_project": true }
+  },
+  { "caption": "OpenRecent: Open sublime's folder history", "command": "open_folder_history" },
+  { "caption": "OpenRecent: Open sublime's file history", "command": "open_file_history" },
+  { "caption": "OpenRecent: Open sublime's folder history and add to project",
     "command": "open_folder_history", "args": { "add_to_project": true }
   },
+  { "caption": "OpenRecent: Remove folder from recent history", "command": "remove_recent_folder" },
   { "caption": "OpenRecent: Move current tab to new window", "command": "move_to_new_window" },
   { "caption": "OpenRecent: Move current tab to a particular window", "command": "move_to_window" },
 ]

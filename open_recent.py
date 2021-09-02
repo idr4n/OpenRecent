@@ -71,9 +71,18 @@ def prettify_path(path: str):
     return path
 
 
-def display_list(str_list):
-    """Prettifies path and return list in reversed order"""
+def set_folders_list(str_list):
+    """Prettifies paths and return list in reversed order"""
     return list(map(prettify_path, str_list[::-1]))
+
+
+def display_list(str_list):
+    """Displays list in one or two lines"""
+    if settings.get('display_two_lines'):
+        return [[os.path.basename(f), os.path.dirname(f)]
+                for f in str_list]
+    else:
+        return str_list
 
 
 class FoldersListener(sublime_plugin.ViewEventListener):
@@ -138,7 +147,7 @@ class PreCloseWinListener(sublime_plugin.EventListener):
             f.write(folders_info_data)
 
 
-class OpenRecentFoldersCommand(sublime_plugin.WindowCommand):
+class OpenRecentFolderCommand(sublime_plugin.WindowCommand):
     def __init__(self, window) -> None:
         super().__init__(window)
         self.folders = []
@@ -154,7 +163,7 @@ class OpenRecentFoldersCommand(sublime_plugin.WindowCommand):
         self.window.run_command('new_window')
         return sublime.active_window(), False
 
-    def on_open(self, index, add_to: bool):
+    def on_selected(self, index, add_to: bool):
         if index >= 0:
             folder = self.folders[index]
             if os.path.isdir(os.path.expanduser(folder)):
@@ -183,12 +192,43 @@ class OpenRecentFoldersCommand(sublime_plugin.WindowCommand):
                     window.open_file(file)
 
     def run(self, add_to_project=False):
-        self.folders = display_list(folders_hist)
+        self.folders = set_folders_list(folders_hist)
         placeholder = "Open Recent Folders (out of %s)" % len(self.folders)
         if len(self.folders) > 0:
             self.window.show_quick_panel(
-                self.folders,
-                on_select=lambda idx: self.on_open(idx, add_to_project),
+                display_list(self.folders),
+                on_select=lambda idx: self.on_selected(idx, add_to_project),
+                placeholder=placeholder)
+        else:
+            self.window.show_quick_panel(["No history found"], None)
+
+
+class RemoveRecentFolderCommand(sublime_plugin.WindowCommand):
+    def on_selected(self, index):
+        if index >= 0:
+            folder = self.folders[index]
+            for window in sublime.windows():
+                if os.path.expanduser(folder) in window.folders():
+                    msg = """First close the window with the folder
+                    you want to remove."""
+                    sublime.message_dialog(msg)
+                    return
+            validator = sublime.ok_cancel_dialog(
+                'Remove "%s" from history?' % folder)
+            if validator:
+                msg = """The folder will be completely removed after closing
+                a window or Sublime Text"""
+                sublime.message_dialog(msg)
+                folders_hist.remove(folder)
+                folders_info.pop(folder, None)
+
+    def run(self):
+        self.folders = set_folders_list(folders_hist)
+        placeholder = "Delete folder out of recent history"
+        if len(self.folders) > 0:
+            self.window.show_quick_panel(
+                display_list(self.folders),
+                on_select=lambda idx: self.on_selected(idx),
                 placeholder=placeholder)
         else:
             self.window.show_quick_panel(["No history found"], None)
