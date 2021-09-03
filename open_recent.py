@@ -9,11 +9,13 @@ OS = sublime.platform()
 
 RECENT_FOLDERS = 'OpenRecent_recent_folders.json'
 FOLDERS_INFO = 'OpenRecent_folders_info.json'
+RECENT_FILES = 'OpenRecent_recent_files.json'
 
 settings = {}
 prefs_subl_history = {}
 folders_hist = []
 folders_info = {}
+files_hist = []
 
 
 def debug(var, message=''):
@@ -44,13 +46,16 @@ def get_int(num, default_num):
 
 
 def load_history_files():
-    global folders_hist, folders_info
+    global folders_hist, folders_info, files_hist
     recent_folders = os.path.join(
         sublime.packages_path(), 'User', RECENT_FOLDERS)
     recent_folders_info = os.path.join(
         sublime.packages_path(), 'User', FOLDERS_INFO)
+    recent_files = os.path.join(
+        sublime.packages_path(), 'User', RECENT_FILES)
 
     folders_hist = get_data(recent_folders, [])
+    files_hist = get_data(recent_files, [])
     folders_info = get_data(recent_folders_info, {})
 
 
@@ -83,7 +88,7 @@ def prettify_path(path: str):
     return path
 
 
-def set_folders_list(str_list):
+def set_paths_list(str_list):
     """Prettifies paths and return list in reversed order"""
     return list(map(prettify_path, str_list[::-1]))
 
@@ -97,12 +102,13 @@ def display_list(str_list):
         return str_list
 
 
-class FoldersListener(sublime_plugin.ViewEventListener):
+class FoldersFilesListener(sublime_plugin.ViewEventListener):
     def on_load_async(self):
         self._append_folders()
 
     def on_activated_async(self):
         self._update_folders_info()
+        self._append_files()
 
     def _update_folders_info(self):
         window = self.view.window()
@@ -128,6 +134,8 @@ class FoldersListener(sublime_plugin.ViewEventListener):
 
     def _append_folders(self):
         window = self.view.window()
+        if not window:
+            return
         win_folders = window.folders()
         max_folders = get_int(settings.get('max_folders'), 30)
 
@@ -143,11 +151,30 @@ class FoldersListener(sublime_plugin.ViewEventListener):
                 removed_folder = folders_hist.pop(0)
                 folders_info.pop(removed_folder, None)
 
+    def _append_files(self):
+        window = self.view.window()
+        if not window:
+            return
+        win_views = window.views()
+        max_files = get_int(settings.get('max_files'), 50)
+
+        if win_views:
+            for view in win_views:
+                file = prettify_path(view.file_name())
+                if file in files_hist:
+                    files_hist.remove(file)
+
+                files_hist.append(file)
+
+            while len(files_hist) > max_files:
+                files_hist.pop(0)
+
 
 class PreCloseWinListener(sublime_plugin.EventListener):
     def on_pre_close_window(self, window):
         self._save_folders()
         self._save_folders_info()
+        self._save_files()
 
     def _save_folders(self):
         folders_data = sublime.encode_value(folders_hist, True)
@@ -162,6 +189,13 @@ class PreCloseWinListener(sublime_plugin.EventListener):
             sublime.packages_path(), 'User', FOLDERS_INFO)
         with open(recent_folders_info, 'w', encoding="utf-8") as f:
             f.write(folders_info_data)
+
+    def _save_files(self):
+        files_data = sublime.encode_value(files_hist, True)
+        recent_files = os.path.join(
+            sublime.packages_path(), 'User', RECENT_FILES)
+        with open(recent_files, 'w', encoding="utf-8") as f:
+            f.write(files_data)
 
 
 class OpenRecentFolderCommand(sublime_plugin.WindowCommand):
@@ -209,7 +243,7 @@ class OpenRecentFolderCommand(sublime_plugin.WindowCommand):
                     window.open_file(file)
 
     def run(self, add_to_project=False):
-        self.folders = set_folders_list(folders_hist)
+        self.folders = set_paths_list(folders_hist)
         placeholder = "Open Recent Folder (out of %s)" % len(self.folders)
         if len(self.folders) > 0:
             self.window.show_quick_panel(
@@ -240,13 +274,70 @@ class RemoveRecentFolderCommand(sublime_plugin.WindowCommand):
                 folders_info.pop(folder, None)
 
     def run(self):
-        self.folders = set_folders_list(folders_hist)
+        self.folders = set_paths_list(folders_hist)
         placeholder = "Delete folder out of recent history"
         if len(self.folders) > 0:
             self.window.show_quick_panel(
                 display_list(self.folders),
                 on_select=lambda idx: self.on_selected(idx),
                 placeholder=placeholder)
+        else:
+            self.window.show_quick_panel(["No history found"], None)
+
+
+class OpenRecentFilesCommand(sublime_plugin.WindowCommand):
+    def __init__(self, window) -> None:
+        super().__init__(window)
+        self.files = []
+
+    def get_window(self):
+        curwin = sublime.active_window()
+
+        if settings.get('open_in_new_window'):
+            if not curwin.folders() and not curwin.views():
+                return curwin
+            else:
+                self.window.run_command('new_window')
+                return sublime.active_window()
+
+        return curwin
+
+    def is_transient(self, view):
+        opened_views = self.window.views()
+        if view in opened_views:
+            return False
+
+        return True
+
+    def show_preview(self, index):
+        if index >= 0 and settings.get('show_file_preview'):
+            file = self.files[index]
+            if os.path.isfile(os.path.expanduser(file)):
+                self.window.open_file(file, sublime.TRANSIENT)
+
+    def on_selected(self, index):
+        active_view = self.window.active_view()
+        if index >= 0:
+            if self.is_transient(active_view):
+                active_view.close()
+            file = self.files[index]
+            if os.path.isfile(os.path.expanduser(file)):
+                new_win = self.get_window()
+                new_win.open_file(file)
+
+        else:
+            if self.is_transient(active_view):
+                active_view.close()
+
+    def run(self):
+        self.files = set_paths_list(files_hist)
+        placeholder = "Open Recent File (out of %s)" % len(self.files)
+        if len(self.files) > 0:
+            self.window.show_quick_panel(
+                display_list(self.files),
+                on_select=lambda idx: self.on_selected(idx),
+                placeholder=placeholder,
+                on_highlight=self.show_preview)
         else:
             self.window.show_quick_panel(["No history found"], None)
 
@@ -413,16 +504,11 @@ class OpenFolderHistoryCommand(sublime_plugin.WindowCommand):
 
 
 class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
-    # conf = Conf('files')
-
     def __init__(self, window):
         super().__init__(window)
         self.conf = ConfSublHist('files')
 
     def get_window(self):
-        """
-        Returns the window in which the file will be opened.
-        """
         curwin = sublime.active_window()
 
         if settings.get('open_in_new_window'):
@@ -448,11 +534,6 @@ class OpenFileHistoryCommand(sublime_plugin.WindowCommand):
                 self.window.open_file(file, sublime.TRANSIENT)
 
     def open_file(self, index):
-        """
-        Opens the selected folder in the active window
-
-        :param  index:  The index of the file in the quick panel list
-        """
         active_view = self.window.active_view()
         if index >= 0:
             if self.is_transient(active_view):

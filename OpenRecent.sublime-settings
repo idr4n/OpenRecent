@@ -17,4 +17,7 @@
 
   // max. number of folders in recent history
   "max_folders": 30,
+
+  // max. number of files in recent history
+  "max_files": 100,
 }

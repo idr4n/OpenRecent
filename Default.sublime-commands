@@ -3,6 +3,7 @@
   { "caption": "OpenRecent: Open recent folder and add to project",
     "command": "open_recent_folder", "args": { "add_to_project": true }
   },
+  { "caption": "OpenRecent: Open recent files", "command": "open_recent_files" },
   { "caption": "OpenRecent: Open sublime's folder history", "command": "open_folder_history" },
   { "caption": "OpenRecent: Open sublime's file history", "command": "open_file_history" },
   { "caption": "OpenRecent: Open sublime's folder history and add to project",
