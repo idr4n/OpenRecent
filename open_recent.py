@@ -31,6 +31,18 @@ def plugin_loaded():
     load_history_files()
 
 
+def get_int(num, default_num):
+    try:
+        val = int(num)
+        if val < 0:
+            val = default_num
+        return val
+    except Exception:
+        msg = "OpenRecent: '%s' is not a valid integer in your settings" % num
+        sublime.message_dialog(msg)
+        return default_num
+
+
 def load_history_files():
     global folders_hist, folders_info
     recent_folders = os.path.join(
@@ -117,6 +129,7 @@ class FoldersListener(sublime_plugin.ViewEventListener):
     def _append_folders(self):
         window = self.view.window()
         win_folders = window.folders()
+        max_folders = get_int(settings.get('max_folders'), 30)
 
         if win_folders:
             for folder in win_folders:
@@ -125,6 +138,10 @@ class FoldersListener(sublime_plugin.ViewEventListener):
                     folders_hist.remove(folder)
 
                 folders_hist.append(folder)
+
+            while len(folders_hist) > max_folders:
+                removed_folder = folders_hist.pop(0)
+                folders_info.pop(removed_folder, None)
 
 
 class PreCloseWinListener(sublime_plugin.EventListener):

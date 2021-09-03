@@ -14,4 +14,7 @@
 
   // whether to open file from history in a new window
   "open_in_new_window": false,
+
+  // max. number of folders in recent history
+  "max_folders": 30,
 }
