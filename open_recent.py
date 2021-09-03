@@ -210,7 +210,7 @@ class OpenRecentFolderCommand(sublime_plugin.WindowCommand):
 
     def run(self, add_to_project=False):
         self.folders = set_folders_list(folders_hist)
-        placeholder = "Open Recent Folders (out of %s)" % len(self.folders)
+        placeholder = "Open Recent Folder (out of %s)" % len(self.folders)
         if len(self.folders) > 0:
             self.window.show_quick_panel(
                 display_list(self.folders),
@@ -341,12 +341,12 @@ class ConfSublHist():
             sublime.message_dialog('There are no items in history yet!')
             return
 
-        prittified_items = list(map(prettify_path, self.items))
+        prettified_items = list(map(prettify_path, self.items))
         if settings.get('display_two_lines'):
             self.display_list = [[os.path.basename(f), os.path.dirname(f)]
-                                 for f in prittified_items]
+                                 for f in prettified_items]
         else:
-            self.display_list = prittified_items
+            self.display_list = prettified_items
 
     @staticmethod
     def windofy_path(path: str):
