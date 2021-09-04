@@ -116,21 +116,22 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
             return
         views = window.views()
 
-        for folder in window.folders():
-            opened_files_in_folder = []
-            folder = prettify_path(folder)
-            folder_info = folders_info.get(folder, {})
-            if views:
-                for view in views:
-                    file_name = prettify_path(view.file_name())
-                    if file_name.startswith(folder):
-                        opened_files_in_folder.append(file_name)
+        if window.folders():
+            for folder in window.folders():
+                opened_files_in_folder = []
+                folder = prettify_path(folder)
+                folder_info = folders_info.get(folder, {})
+                if views:
+                    for view in views:
+                        file_name = prettify_path(view.file_name())
+                        if file_name.startswith(folder):
+                            opened_files_in_folder.append(file_name)
 
-                folder_info['opened_files'] = opened_files_in_folder
-            else:
-                folder_info['opened_files'] = []
+                    folder_info['opened_files'] = opened_files_in_folder
+                else:
+                    folder_info['opened_files'] = []
 
-            folders_info[folder] = folder_info
+                folders_info[folder] = folder_info
 
     def _append_folders(self):
         window = self.view.window()
@@ -363,7 +364,6 @@ class PrefSublHist():
         auto_ses_path = os.path.join(session_folder, self.auto_session_file)
 
         if os.path.exists(auto_ses_path):
-            # print('Auto session exists: ', auto_ses_path)
             return auto_ses_path
 
         return ses_path
@@ -418,7 +418,6 @@ class ConfSublHist():
         try:
             return self.items.index(self.cache['last_selection'])
         except Exception:
-            # print('Open Recent: No previous selection found')
             return 0
 
     def update_cache(self, **kwargs):
