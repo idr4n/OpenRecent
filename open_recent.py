@@ -41,7 +41,8 @@ def get_int(num, default_num):
         return val
     except Exception:
         msg = "OpenRecent: '%s' is not a valid integer in your settings" % num
-        sublime.message_dialog(msg)
+        # sublime.message_dialog(msg)
+        debug(None, msg)
         return default_num
 
 
@@ -83,8 +84,9 @@ def get_data(path: str, default=[]):
 
 def prettify_path(path: str):
     user_home = os.path.expanduser('~') + os.sep
-    if path.startswith(os.path.expanduser('~')):
-        return os.path.join('~', path[len(user_home):])
+    if path:
+        if path.startswith(os.path.expanduser('~')):
+            return os.path.join('~', path[len(user_home):])
     return path
 
 
@@ -157,15 +159,17 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
         if not window:
             return
         win_views = window.views()
-        max_files = get_int(settings.get('max_files'), 50)
+        max_files = get_int(settings.get('max_files'), 100)
 
         if win_views:
             for view in win_views:
-                file = prettify_path(view.file_name())
-                if file in files_hist:
-                    files_hist.remove(file)
+                file_name = view.file_name()
+                if file_name:
+                    file = prettify_path(file_name)
+                    if file in files_hist:
+                        files_hist.remove(file)
 
-                files_hist.append(file)
+                    files_hist.append(file)
 
             while len(files_hist) > max_files:
                 files_hist.pop(0)
