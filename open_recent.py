@@ -165,7 +165,7 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
         if win_views:
             for view in win_views:
                 file_name = view.file_name()
-                if file_name:
+                if file_name and os.path.exists(file_name):
                     file = prettify_path(file_name)
                     if file in files_hist:
                         files_hist.remove(file)
