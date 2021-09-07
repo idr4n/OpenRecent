@@ -125,9 +125,10 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
                 folder_info = folders_info.get(folder, {})
                 if views:
                     for view in views:
-                        file_name = prettify_path(view.file_name())
-                        if file_name.startswith(folder):
-                            opened_files_in_folder.append(file_name)
+                        if view.file_name():
+                            file_name = prettify_path(view.file_name())
+                            if file_name.startswith(folder):
+                                opened_files_in_folder.append(file_name)
 
                     folder_info['opened_files'] = opened_files_in_folder
                 else:
