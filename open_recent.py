@@ -131,8 +131,12 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
                                 opened_files_in_folder.append(file_name)
 
                     folder_info['opened_files'] = opened_files_in_folder
+                    active_file = prettify_path(
+                        window.active_view().file_name())
+                    folder_info['active_file'] = active_file
                 else:
                     folder_info['opened_files'] = []
+                    folder_info['active_file'] = ''
 
                 folders_info[folder] = folder_info
 
@@ -247,11 +251,15 @@ class OpenRecentFolderCommand(sublime_plugin.WindowCommand):
     def open_folder_files(self, folder, window):
         folder_info = folders_info.get(folder, {})
         opened_files = folder_info.get('opened_files', [])
+        active_file = folder_info.get('active_file', '')
         if opened_files:
             for file in folder_info['opened_files']:
                 file = os.path.expanduser(file)
                 if os.path.exists(file):
                     window.open_file(file)
+
+        if active_file:
+            window.focus_view(window.find_open_file(active_file))
 
     def run(self, add_to_project=False):
         self.folders = set_paths_list(folders_hist)
