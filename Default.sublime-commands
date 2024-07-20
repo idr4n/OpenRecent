@@ -12,4 +12,13 @@
   { "caption": "OpenRecent: Remove folder from recent history", "command": "remove_recent_folder" },
   { "caption": "OpenRecent: Move current tab to new window", "command": "move_to_new_window" },
   { "caption": "OpenRecent: Move current tab to a particular window", "command": "move_to_window" },
+  {
+    "caption": "OpenRecent: Settings",
+    "command": "edit_settings",
+    "args":
+    {
+      "base_file": "${packages}/OpenRecent/OpenRecent.sublime-settings",
+      "default": "{\n\t$0\n}\n"
+    }
+  },
 ]
