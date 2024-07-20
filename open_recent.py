@@ -182,11 +182,6 @@ class FoldersFilesListener(sublime_plugin.ViewEventListener):
 
 class PreCloseWinListener(sublime_plugin.EventListener):
     def on_pre_close_window(self, window):
-        print('closing window...')
-
-    # def on_pre_close_window(self, window):
-    def on_pre_close(self, view):
-        print('on pre-closing view... saving recent folders and files')
         self._save_folders()
         self._save_folders_info()
         self._save_files()
