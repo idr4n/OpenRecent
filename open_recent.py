@@ -58,6 +58,7 @@ def load_history_files():
     folders_hist = get_data(recent_folders, [])
     files_hist = get_data(recent_files, [])
     folders_info = get_data(recent_folders_info, {})
+    sanitize_folders()
 
 
 def get_data(path: str, default=[]):
@@ -80,6 +81,14 @@ def get_data(path: str, default=[]):
             f.write(sublime.encode_value(data, True))
 
     return data
+
+
+def sanitize_folders():
+    if isinstance(folders_hist, list) and isinstance(folders_info, dict):
+        no_paths = [path for path in folders_hist if not os.path.exists(os.path.expanduser(path))]
+        for path in no_paths:
+            folders_hist.remove(path)
+            folders_info.pop(path, None)
 
 
 def prettify_path(path: str):
